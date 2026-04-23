@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeaveFlow &mdash; Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <span class="nav-brand-name">LeaveFlow</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Hello, <strong>{{ session.username }}</strong></span>
+    <span class="nav-badge admin">Admin</span>
+    <a href="{{ url_for('logout') }}" class="nav-logout">Sign out</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list" role="alert">
+        {% for cat, msg in messages %}<li class="flash {{ cat }}">{{ msg }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <header class="page-header">
+    <h1>Admin Dashboard</h1>
+    <p>Manage leave requests and monitor employee availability.</p>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row four">
+    <div class="stat-card pending">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value">{{ pending_count }}</div>
+    </div>
+    <div class="stat-card approved">
+      <div class="stat-label">Approved</div>
+      <div class="stat-value">{{ approved_count }}</div>
+    </div>
+    <div class="stat-card denied">
+      <div class="stat-label">Denied</div>
+      <div class="stat-value">{{ denied_count }}</div>
+    </div>
+    <div class="stat-card onleave">
+      <div class="stat-label">On Leave Today</div>
+      <div class="stat-value">{{ on_leave_count }}</div>
+    </div>
+  </div>
+
+  <!-- Leave Requests -->
+  <h2 class="section-title">Leave Requests <span class="count">{{ requests|length }}</span></h2>
+  <div class="card">
+    {% if requests %}
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Employee</th>
+              <th scope="col">Dates</th>
+              <th scope="col">Days</th>
+              <th scope="col">Reason</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set colours = ['#4a7c59','#e8a020','#7c3aed','#0369a1','#dc2626'] %}
+            {% for req in requests %}
+            <tr>
+              <td>
+                <div class="cell-user">
+                  <div class="avatar" style="background:{{ colours[req.employee_id % 5] }}" aria-hidden="true">{{ req.employee_name[0]|upper }}</div>
+                  <div class="cell-user-info">
+                    <span class="cell-user-name">{{ req.employee_name }}</span>
+                    <span class="cell-user-sub">{{ req.employee_email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td style="white-space:nowrap">{{ req.start_date.strftime('%d %b') }} &ndash; {{ req.end_date.strftime('%d %b %Y') }}</td>
+              <td><strong>{{ req.number_of_days }}</strong></td>
+              <td class="reason-cell" title="{{ req.reason }}">{{ req.reason }}</td>
+              <td><span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span></td>
+              <td>
+                {% if req.status == 'Pending' %}
+                  <div class="action-form">
+                    <form method="POST" action="{{ url_for('leave_action', leave_id=req.id, action='approve') }}" style="display:contents">
+                      <label for="repl-{{ req.id }}" class="sr-only">Replacement for {{ req.employee_name }}</label>
+                      <select id="repl-{{ req.id }}" name="replacement_id">
+                        <option value="">No replacement</option>
+                        {% for emp in employees %}
+                          {% if emp.id != req.employee_id and not emp.on_leave %}
+                            <option value="{{ emp.id }}">{{ emp.username }}</option>
+                          {% endif %}
+                        {% endfor %}
+                      </select>
+                      <button type="submit" class="btn-approve">&#10003; Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('leave_action', leave_id=req.id, action='deny') }}" style="display:contents">
+                      <button type="submit" class="btn-deny">&#10005; Deny</button>
+                    </form>
+                  </div>
+                {% else %}
+                  <span class="processed-label">{% if req.replacement_name %}Replacement: {{ req.replacement_name }}{% else %}Processed{% endif %}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty" role="status"><div class="empty-icon">&#9989;</div><p>No leave requests to review.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Employee Management -->
+  <h2 class="section-title">Employee Management <span class="count">{{ employees|length }}</span></h2>
+  <div class="card">
+    {% if employees %}
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Employee</th>
+              <th scope="col">Total</th>
+              <th scope="col">Remaining</th>
+              <th scope="col">Balance</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set colours = ['#4a7c59','#e8a020','#7c3aed','#0369a1','#dc2626'] %}
+            {% for emp in employees %}
+              {% set pct = (emp.remaining_leaves / emp.total_leaves * 100)|int if emp.total_leaves > 0 else 0 %}
+              <tr>
+                <td>
+                  <div class="cell-user">
+                    <div class="avatar" style="background:{{ colours[emp.id % 5] }}" aria-hidden="true">{{ emp.username[0]|upper }}</div>
+                    <div class="cell-user-info">
+                      <span class="cell-user-name">{{ emp.username }}</span>
+                      <span class="cell-user-sub">{{ emp.email }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ emp.total_leaves }} days</td>
+                <td><strong>{{ emp.remaining_leaves }}</strong> days</td>
+                <td>
+                  <div class="balance-cell">
+                    <div class="leave-bar" role="progressbar" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                      <div class="leave-bar-fill{% if pct < 30 %} low{% endif %}" style="width:{{ pct }}%"></div>
+                    </div>
+                    <span class="balance-pct">{{ pct }}%</span>
+                  </div>
+                </td>
+                <td>
+                  {% if emp.on_leave %}
+                    <span><span class="status-dot dot-onleave" aria-hidden="true"></span>On Leave</span>
+                  {% else %}
+                    <span><span class="status-dot dot-available" aria-hidden="true"></span>Available</span>
+                  {% endif %}
+                </td>
+                <td><a href="{{ url_for('employee_detail', emp_id=emp.id) }}" class="btn-detail">View &rarr;</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty" role="status"><div class="empty-icon">&#128101;</div><p>No employees registered yet.</p></div>
+    {% endif %}
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

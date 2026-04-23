@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeaveFlow &mdash; My Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <span class="nav-brand-name">LeaveFlow</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Hello, <strong>{{ user.username }}</strong></span>
+    <span class="nav-badge employee">Employee</span>
+    <a href="{{ url_for('logout') }}" class="nav-logout">Sign out</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list" role="alert">
+        {% for cat, msg in messages %}<li class="flash {{ cat }}">{{ msg }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <header class="page-header">
+    <h1>My Leave Dashboard</h1>
+    <p>Track your leave balance and submit new requests.</p>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-label">Total Entitlement</div>
+      <div class="stat-value">{{ user.total_leaves }}</div>
+      <div class="stat-sub">days per year</div>
+    </div>
+    <div class="stat-card taken">
+      <div class="stat-label">Leaves Taken</div>
+      <div class="stat-value">{{ leaves_taken }}</div>
+      <div class="stat-sub">approved days used</div>
+    </div>
+    <div class="stat-card remain">
+      <div class="stat-label">Remaining Balance</div>
+      <div class="stat-value">{{ user.remaining_leaves }}</div>
+      <div class="stat-sub">days available</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Apply form -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Apply for Leave</h2>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('apply_leave') }}" novalidate>
+          <div class="field">
+            <label>Number of Days</label>
+            <div class="days-display" id="daysDisplay" aria-live="polite">&mdash; select dates below &mdash;</div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="startDate">Start Date</label>
+              <input id="startDate" type="date" name="start_date" required />
+            </div>
+            <div class="field">
+              <label for="endDate">End Date</label>
+              <input id="endDate" type="date" name="end_date" required />
+            </div>
+          </div>
+          <div class="field">
+            <label for="reason">Reason for Leave</label>
+            <textarea id="reason" name="reason" placeholder="Briefly describe the reason for your leave request…" required></textarea>
+          </div>
+          <button type="submit" class="btn-primary">Submit Leave Request &rarr;</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Leave history -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Leave History</h2>
+        <span style="font-size:12px;color:var(--muted)">{{ leaves|length }} total</span>
+      </div>
+      {% if leaves %}
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Dates</th>
+                <th scope="col">Days</th>
+                <th scope="col">Reason</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for leave in leaves %}
+              <tr>
+                <td style="white-space:nowrap">{{ leave.start_date.strftime('%d %b') }} &ndash; {{ leave.end_date.strftime('%d %b %Y') }}</td>
+                <td><strong>{{ leave.number_of_days }}</strong></td>
+                <td class="reason-cell" title="{{ leave.reason }}">{{ leave.reason }}</td>
+                <td><span class="badge badge-{{ leave.status|lower }}">{{ leave.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty" role="status">
+          <div class="empty-icon">&#128203;</div>
+          <p>No leave requests yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeaveFlow &mdash; {% if page == 'login' %}Sign In{% else %}Create Account{% endif %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<div class="auth-layout">
+
+  <!-- Left panel -->
+  <aside class="auth-left" aria-hidden="true">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8"  y1="2" x2="8"  y2="6" />
+          <line x1="3"  y1="10" x2="21" y2="10" />
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+        </svg>
+      </div>
+      <span class="brand-name">LeaveFlow</span>
+    </div>
+    <div class="hero-text">
+      <div class="hero-label">Employee Leave Management</div>
+      <!-- <h1 class="hero-heading">Time off,<br /><em>handled</em><br />beautifully.</h1> -->
+      <p class="hero-desc">Automate the Leave Management Process, Provide a Secure, Enable Easy Leave Application, Maintain Accurate Leave Records.</p>
+      <div class="features">
+        <div class="feat"><div class="feat-dot"></div><span>One-click leave requests for employees</span></div>
+        <div class="feat"><div class="feat-dot" style="background:#4a7c59"></div><span>Admin approval with full visibility</span></div>
+        <div class="feat"><div class="feat-dot" style="background:#8b5cf6"></div><span>Auto balance tracking &amp; replacements</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right form panel -->
+  <main class="auth-right">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list" role="alert">
+          {% for cat, msg in messages %}
+            <li class="flash {{ cat }}">{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <nav class="tabs">
+      <a href="{{ url_for('login') }}"  class="tab {% if page == 'login' %}active{% endif %}">Sign In</a>
+      <a href="{{ url_for('signup') }}" class="tab {% if page == 'signup' %}active{% endif %}">Create Account</a>
+    </nav>
+
+    {% if page == 'login' %}
+    <h2 class="form-title">Welcome back</h2>
+    <p class="form-subtitle">Sign in to access your dashboard.</p>
+    <form method="POST" action="{{ url_for('login') }}" novalidate>
+      <div class="field">
+        <label for="login-email">Email Address</label>
+        <input id="login-email" type="email" name="email" placeholder="you@company.com" required />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" name="password" placeholder="••••••••" required />
+      </div>
+      <div class="field">
+        <label>I am signing in as</label>
+        <div class="role-group">
+          <label class="role-btn selected" id="empBtn">
+            <input type="radio" name="role" value="employee" checked />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span>Employee</span>
+          </label>
+          <label class="role-btn" id="admBtn">
+            <input type="radio" name="role" value="admin" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span>Admin</span>
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Sign In &rarr;</button>
+    </form>
+
+    {% else %}
+    <h2 class="form-title">Create account</h2>
+    <p class="form-subtitle">Join LeaveFlow &mdash; it only takes a moment.</p>
+    <form method="POST" action="{{ url_for('signup') }}" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="signup-username">Username</label>
+          <input id="signup-username" type="text" name="username" placeholder="your name" required />
+        </div>
+        <div class="field">
+          <label for="signup-email">Email Address</label>
+          <input id="signup-email" type="email" name="email" placeholder="you@company.com" required />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input id="signup-password" type="password" name="password" placeholder="Min. 6 characters" minlength="6" required />
+        </div>
+        <div class="field">
+          <label for="signup-confirm">Confirm Password</label>
+          <input id="signup-confirm" type="password" name="confirm_password" placeholder="Re-enter password" required />
+        </div>
+      </div>
+      <div class="field">
+        <label>I am registering as</label>
+        <div class="role-group">
+          <label class="role-btn selected" id="empBtn">
+            <input type="radio" name="role" value="employee" checked />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span>Employee</span>
+          </label>
+          <label class="role-btn" id="admBtn">
+            <input type="radio" name="role" value="admin" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span>Admin</span>
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Create Account &rarr;</button>
+    </form>
+    {% endif %}
+
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

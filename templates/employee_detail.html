@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeaveFlow &mdash; {{ emp.username }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <span class="nav-brand-name">LeaveFlow</span>
+  </div>
+  <a href="{{ url_for('admin_dashboard') }}" class="nav-logout">&larr; Back to Dashboard</a>
+</nav>
+
+<main class="container" style="max-width:900px">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list" role="alert">
+        {% for cat, msg in messages %}<li class="flash {{ cat }}">{{ msg }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% set colours = ['#4a7c59','#e8a020','#7c3aed','#0369a1','#dc2626'] %}
+  <div class="profile-card">
+    <div class="avatar-lg" style="background:{{ colours[emp.id % 5] }}" aria-hidden="true">{{ emp.username[0]|upper }}</div>
+    <div class="profile-info">
+      <h1>{{ emp.username }}</h1>
+      <p>{{ emp.email }} &middot; Employee</p>
+    </div>
+    <div class="profile-stats">
+      <div class="ps"><div class="ps-val">{{ emp.total_leaves }}</div><div class="ps-lbl">Total</div></div>
+      <div class="ps"><div class="ps-val" style="color:#4a7c59">{{ emp.remaining_leaves }}</div><div class="ps-lbl">Remaining</div></div>
+      <div class="ps"><div class="ps-val" style="color:#f97316">{{ emp.total_leaves - emp.remaining_leaves }}</div><div class="ps-lbl">Used</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Leave History</h2>
+      <span style="font-size:12px;color:var(--muted)">{{ leaves|length }} records</span>
+    </div>
+    {% if leaves %}
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Submitted</th>
+              <th scope="col">Dates</th>
+              <th scope="col">Days</th>
+              <th scope="col">Reason</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in leaves %}
+            <tr>
+              <td style="color:var(--muted)">{{ l.created_at.strftime('%d %b %Y') }}</td>
+              <td style="white-space:nowrap">{{ l.start_date.strftime('%d %b') }} &ndash; {{ l.end_date.strftime('%d %b %Y') }}</td>
+              <td><strong>{{ l.number_of_days }}</strong></td>
+              <td class="reason-cell" title="{{ l.reason }}">{{ l.reason }}</td>
+              <td><span class="badge badge-{{ l.status|lower }}">{{ l.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty" role="status"><div class="empty-icon">&#128203;</div><p>No leave history for this employee.</p></div>
+    {% endif %}
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
